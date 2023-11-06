@@ -2,6 +2,6 @@
 
 (Paper under review)
 
-WinBUGS and R code used to run the entire case study.
+`R` code used to run the entire case study. Implementation is provided in the `WinBUGS` and `NIMBLE` Bayesian inference MCMC packages.
 
 **Note**: Due to the individual nature of the data set used, we are not allowed to share it. However, data providers should allow access to the data set under the same conditions as the authors of this study.
