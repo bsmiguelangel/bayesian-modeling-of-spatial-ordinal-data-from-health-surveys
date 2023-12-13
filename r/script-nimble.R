@@ -6,7 +6,7 @@ pacman::p_load(foreign, readxl, faraway, spdep, ggplot2, RColorBrewer, graphics,
                sp, ggpubr, leaflet, nimble, ggmcmc, extraDistr, parallel, MCMCvis, 
                gridExtra, install = FALSE)
 
-#### Figure 1: kappa[1:NCats] interpretation as cut points ####
+#### Figure 1: kappa[1:(NCats-1)] interpretation as cut points ####
 
 x <- seq(from = -6.5, to = 6.5, length.out = 1000)
 y <- dlogis(x)

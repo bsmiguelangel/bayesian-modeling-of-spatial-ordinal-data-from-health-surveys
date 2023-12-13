@@ -8,7 +8,7 @@ pacman::p_load(foreign, readxl, faraway, R2WinBUGS, pbugs, spdep, ggplot2,
                RColorBrewer, graphics, sp, ggpubr, leaflet, gridExtra,
                install = FALSE)
 
-#### Figure 1: kappa[1:NCats] interpretation as cut points ####
+#### Figure 1: kappa[1:(NCats-1)] interpretation as cut points ####
 
 x <- seq(from = -6.5, to = 6.5, length.out = 1000)
 y <- dlogis(x)
@@ -722,43 +722,39 @@ percentagesmean <- apply(result1$prlevels.post, c(2, 3), mean) * 100
 category <- percentagesmean[, 1]
 breaks <- c(min(category) - 0.001, quantile(category, probs = seq(1/9, 8/9, length.out = 8)), max(category))
 breaks
-breaks <- c(14.16, round(breaks[2:9], 2), 31.53)
-carto_muni@data$category1 <- cut(category, breaks = breaks, include.lowest = FALSE, right = TRUE)
-levels(carto_muni@data$category1) <- c("(14.16,17.23]", "(17.23,18.26]", "(18.26,19.10]",
-                                       "(19.10,19.81]", "(19.81,20.81]", "(20.81,21.70]",
-                                       "(21.70,22.87]", "(22.87,24.80]", "(24.80,31.53)")
+breaks <- c(14.59, round(breaks[2:9], 2), 31.31)
+carto_muni@data$category1 <- cut(category, breaks = breaks, include.lowest = FALSE, right = TRUE, dig.lab = 4)
+levels(carto_muni@data$category1) <- c(levels(carto_muni@data$category1)[1:8],
+                                       "(25.02,31.31)")
+
 category <- percentagesmean[, 2]
 breaks <- c(min(category) - 0.001, quantile(category, probs = seq(1/9, 8/9, length.out = 8)), max(category))
 breaks
-breaks <- c(42.61, round(breaks[2:9], 2), 52.06)
-carto_muni@data$category2 <- cut(category, breaks = breaks, include.lowest = FALSE, right = TRUE)
-levels(carto_muni@data$category2) <- c("(42.61,46.92]", "(46.92,47.93]", "(47.93,48.37]",
-                                       "(48.37,48.96]", "(48.96,49.38]", "(49.38,49.74]",
-                                       "(49.74,50.08]", "(50.08,50.45]", "(50.45,52.06)")
+breaks <- c(43.08, round(breaks[2:9], 2), 52.07)
+carto_muni@data$category2 <- cut(category, breaks = breaks, include.lowest = FALSE, right = TRUE, dig.lab = 4)
+levels(carto_muni@data$category2) <- c(levels(carto_muni@data$category2)[1:8],
+                                       "(50.53,52.07)")
 category <- percentagesmean[, 3]
 breaks <- c(min(category) - 0.001, quantile(category, probs = seq(1/9, 8/9, length.out = 8)), max(category))
 breaks
-breaks <- c(14.42, round(breaks[2:9], 2), 29.40)
-carto_muni@data$category3 <- cut(category, breaks = breaks, include.lowest = FALSE, right = TRUE)
-levels(carto_muni@data$category3) <- c("(14.42,18.37]", "(18.37,19.69]", "(19.69,20.58]",
-                                       "(20.58,21.43]", "(21.43,22.37]", "(22.37,23.00]",
-                                       "(23.00,23.77]", "(23.77,24.92]", "(24.92,29.40)")
+breaks <- c(14.50, round(breaks[2:9], 2), 28.94)
+carto_muni@data$category3 <- cut(category, breaks = breaks, include.lowest = FALSE, right = TRUE, dig.lab = 4)
+levels(carto_muni@data$category3) <- c(levels(carto_muni@data$category3)[1:8],
+                                       "(24.58,28.94)")
 category <- percentagesmean[, 4]
 breaks <- c(min(category) - 0.001, quantile(category, probs = seq(1/9, 8/9, length.out = 8)), max(category))
 breaks
-breaks <- c(3.26, round(breaks[2:9], 2), 10.11)
-carto_muni@data$category4 <- cut(category, breaks = breaks, include.lowest = FALSE, right = TRUE)
-levels(carto_muni@data$category4) <- c("(3.26,4.70]", "(4.70,5.29]", "(5.29,5.61]",
-                                       "(5.61,6.00]", "(6.00,6.39]", "(6.39,6.67]",
-                                       "(6.67,7.04]", "(7.04,7.66]", "(7.66,10.11)")
+breaks <- c(3.28, round(breaks[2:9], 2), 9.72)
+carto_muni@data$category4 <- cut(category, breaks = breaks, include.lowest = FALSE, right = TRUE, dig.lab = 4)
+levels(carto_muni@data$category4) <- c(levels(carto_muni@data$category4)[1:8],
+                                       "(7.5,9.72)")
 category <- percentagesmean[, 5]
 breaks <- c(min(category) - 0.001, quantile(category, probs = seq(1/9, 8/9, length.out = 8)), max(category))
 breaks
-breaks <- c(1.18, round(breaks[2:9], 2), 3.93)
-carto_muni@data$category5 <- cut(category, breaks = breaks, include.lowest = FALSE, right = TRUE)
-levels(carto_muni@data$category5) <- c("(1.18,1.78]", "(1.78,2.03]", "(2.03,2.17]",
-                                       "(2.17,2.35]", "(2.35,2.51]", "(2.51,2.65]",
-                                       "(2.65,2.80]", "(2.80,3.04]", "(3.04,3.93)")
+breaks <- c(1.19, round(breaks[2:9], 2), 3.78)
+carto_muni@data$category5 <- cut(category, breaks = breaks, include.lowest = FALSE, right = TRUE, dig.lab = 4)
+levels(carto_muni@data$category5) <- c(levels(carto_muni@data$category5)[1:8],
+                                       "(2.97,3.78)")
 
 ### Mean age of each municipality ###
 
@@ -783,10 +779,9 @@ agemean <- apply(region * age5, 2, sum)
 breaks <- c(min(agemean) - 0.001, quantile(agemean, probs = seq(1/9, 8/9, length.out = 8)), max(agemean))
 breaks
 breaks <- c(36.38, round(breaks, 2)[2:9], 64.86)
-carto_muni@data$agemean <- cut(agemean, breaks = breaks, include.lowest = FALSE, right = TRUE)
-levels(carto_muni@data$agemean) <- c("(36.38,40.95]", "(40.95,42.17]", "(42.17,43.18]",
-                                     "(43.18,44.39]", "(44.39,45.67]", "(45.67,48.12]",
-                                     "(48.12,50.51]", "(50.51,53.32]", "(53.32,64.86)")
+carto_muni@data$agemean <- cut(agemean, breaks = breaks, include.lowest = FALSE, right = TRUE, dig.lab = 4)
+levels(carto_muni@data$agemean) <- c(levels(carto_muni@data$agemean)[1:8], 
+                                     "(53.32,64.86)")
 
 ### Plots ###
 
