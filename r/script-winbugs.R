@@ -186,7 +186,7 @@ for (Dwell in 1:NDwells) {
   groupD <- c(groupD, which(dwell == Dwell))
 }
 
-### Preparation of maps: Option 1 (Option 2 below) ###
+### Preparation of maps: Option 1 ###
 
 load(file.path("data", "cartography.RData"))
 
@@ -211,43 +211,43 @@ plot_map_neig <- function(neig) {
 
 ### Preparation of maps: Option 2 (do not run if you have run Option 1) ###
 
-# Cartography of the Region of Valencia
-load(file.path("data", "CartoCV.Rdata"))
-# Cartography is sorted by municipality code
-order(carto_muni$INE_MUN)-1:542
-# Neighborhood structure by contiguity
-cv.nb <- poly2nb(carto_muni)
+# # Cartography of the Region of Valencia
+# load(file.path("data", "CartoCV.Rdata"))
+# # Cartography is sorted by municipality code
+# order(carto_muni$INE_MUN)-1:542
+# # Neighborhood structure by contiguity
+# cv.nb <- poly2nb(carto_muni)
+# 
+# # Some extra neighborhoods are added for Rincón de Ademuz comarca
+# cv.nb[[277]] <- as.integer(sort(c(cv.nb[[277]], 312, 317, 517, 523, 508)))
+# cv.nb[[363]] <- as.integer(sort(c(cv.nb[[363]], 312, 317, 517, 523, 508)))
+# cv.nb[[364]] <- as.integer(sort(c(cv.nb[[364]], 312, 317, 517, 523, 508)))
+# cv.nb[[477]] <- as.integer(sort(c(cv.nb[[477]], 312, 317, 517, 523, 508)))
+# 
+# cv.nb[[312]] <- as.integer(sort(c(cv.nb[[312]], 277, 363, 364, 477)))
+# cv.nb[[317]] <- as.integer(sort(c(cv.nb[[317]], 277, 363, 364, 477)))
+# cv.nb[[517]] <- as.integer(sort(c(cv.nb[[517]], 277, 363, 364, 477)))
+# cv.nb[[523]] <- as.integer(sort(c(cv.nb[[523]], 277, 363, 364, 477)))
+# cv.nb[[508]] <- as.integer(sort(c(cv.nb[[508]], 277, 363, 364, 477)))
+# 
+# # Municipality codes
+# INE_MUN <- as.numeric(as.character(carto_muni@data$INE_MUN))
+# # Municipality of each respondent
+# muni <- HSRV2016$localidad
+# muni <- match(muni, INE_MUN)
+# # Number of (distinct) municipalities (542)
+# NMuni <- length(INE_MUN); rm(INE_MUN)
+# 
+# # Number of neighbors of each municipality
+# nadj <- card(cv.nb)
+# # Neighbors of each municipality
+# map <- unlist(cv.nb)
+# # Sum of all the neighbor numbers of all municipalities
+# nadj.tot <- length(map)
+# # Cumulative sums of the number of neighbors of each municipality
+# index <- c(0, cumsum(nadj))
 
-# Some extra neighborhoods are added for Rincón de Ademuz comarca
-cv.nb[[277]] <- as.integer(sort(c(cv.nb[[277]], 312, 317, 517, 523, 508)))
-cv.nb[[363]] <- as.integer(sort(c(cv.nb[[363]], 312, 317, 517, 523, 508)))
-cv.nb[[364]] <- as.integer(sort(c(cv.nb[[364]], 312, 317, 517, 523, 508)))
-cv.nb[[477]] <- as.integer(sort(c(cv.nb[[477]], 312, 317, 517, 523, 508)))
-
-cv.nb[[312]] <- as.integer(sort(c(cv.nb[[312]], 277, 363, 364, 477)))
-cv.nb[[317]] <- as.integer(sort(c(cv.nb[[317]], 277, 363, 364, 477)))
-cv.nb[[517]] <- as.integer(sort(c(cv.nb[[517]], 277, 363, 364, 477)))
-cv.nb[[523]] <- as.integer(sort(c(cv.nb[[523]], 277, 363, 364, 477)))
-cv.nb[[508]] <- as.integer(sort(c(cv.nb[[508]], 277, 363, 364, 477)))
-
-# Municipality codes
-INE_MUN <- as.numeric(as.character(carto_muni@data$INE_MUN))
-# Municipality of each respondent
-muni <- HSRV2016$localidad
-muni <- match(muni, INE_MUN)
-# Number of (distinct) municipalities (542)
-NMuni <- length(INE_MUN); rm(INE_MUN)
-
-# Number of neighbors of each municipality
-nadj <- card(cv.nb)
-# Neighbors of each municipality
-map <- unlist(cv.nb)
-# Sum of all the neighbor numbers of all municipalities
-nadj.tot <- length(map)
-# Cumulative sums of the number of neighbors of each municipality
-index <- c(0, cumsum(nadj))
-
-#### A case study ####
+#### WinBUGS ####
 
 # Code to be able to reproduce the results shown in the paper.
 
@@ -276,7 +276,7 @@ model <- function() {
   
   # Prior distributions
   
-  # kappa[1:NSex, 1:NAges, 1:NCats] cut points
+  # kappa[1:NSex, 1:NAges, 1:(NCats-1)] cut points
   # Stick-breaking process
   for (SexGroup in 1:NSex) {
     for (AgeGroup in 1:NAges) {
@@ -320,8 +320,8 @@ model <- function() {
   # LCAR distribution
   for (Muni in 1:NMuni) {
     theta[Muni] ~ dnorm(mean.theta[Muni], prec.theta[Muni])
-    prec.theta[Muni] <- (1 - lambda + lambda * nadj[Muni]) # / (sd.theta * sd.theta)
-    mean.theta[Muni] <- (lambda / (1 - lambda + lambda * nadj[Muni])) *
+    prec.theta[Muni] <- (1 - rho + rho * nadj[Muni]) # / (sd.theta * sd.theta)
+    mean.theta[Muni] <- (rho / (1 - rho + rho * nadj[Muni])) *
       sum(theta.map[(index[Muni] + 1):index[Muni + 1]])
   }
   
@@ -330,7 +330,7 @@ model <- function() {
   }
   
   # Hyperparameters of the spatial random effect
-  lambda ~ dunif(0, 1)
+  rho ~ dunif(0, 1)
   sd.theta ~ dunif(0, 10)
   
   # Zero-mean constraint for theta[1:NMuni]
@@ -368,7 +368,7 @@ inits <- function() {
                        rbeta(NSex * NAges, 1, NCats - 4)), 
                      dim = c(NSex, NAges, NCats - 1)),
        alpha = c(NA, runif(NDwells - 1)),
-       theta = kk, lambda = runif(1), sd.theta = runif(1))
+       theta = kk, rho = runif(1), sd.theta = runif(1))
 }
 
 ### Data to be loaded ###
@@ -385,24 +385,22 @@ data <- list(y = y, NResp = NResp, NCats = NCats, sex = sex, age = age, dwell = 
 
 ### Parameters to be saved ###
 
-parameters <- c("kappa", "alpha", "theta", "sd.theta", "lambda")
+parameters <- c("kappa", "alpha", "theta", "sd.theta", "rho")
 
 ### WinBUGS call (working.directory path should be changed) ###
 
 salwinbugs <- pbugs(model = model, data = data, inits = inits, parameters.to.save = parameters, 
-                    n.chains = 5, n.iter = 8000, n.burnin = 500, n.thin = 15,
+                    n.chains = 5, n.iter = 3250, n.burnin = 750, n.thin = 5,
                     #working.directory = "~/.wine/drive_c/temp/Rtmp",
-                    working.directory = "/home/beltran_mig/.wine/drive_c/users/beltran_mig/Temp/Area13/",
+                    working.directory = "/home/beltran_mig/.wine/drive_c/users/beltran_mig/Temp/Area1/",
                     cluster = 5
                     #, debug = TRUE
                     , clearWD = TRUE
                     , DIC = FALSE
 )
 
+# 10.65 min on a server with: niter = 3250, nburnin = 750, thin = 5
 # saveRDS(salwinbugs, file = file.path("results", "a-case-study-winbugs.rds"))
-
-# 26.10 min on a server with: niter = 8000, nburnin = 500, thin = 15
-# saveRDS(salnimble, file = file.path("results", "a-case-study-nimble.rds"))
 
 #### Model results ####
 
@@ -413,24 +411,24 @@ salwinbugs <- readRDS(file.path("results", "a-case-study-winbugs.rds"))
 salwinbugs$exec.time
 summary(salwinbugs)
 
-round(salwinbugs$summary, 4)[startsWith(labels(salwinbugs$summary[, 1]), "lambda"), ]
+round(salwinbugs$summary, 4)[startsWith(labels(salwinbugs$summary[, 1]), "theta"), ]
 
-mean((salwinbugs$summary[startsWith(labels(salwinbugs$summary[, 1]), "theta"), 8] > 1.10) | (salwinbugs$summary[startsWith(labels(salwinbugs$summary[, 1]), "theta"), 9] < 100))
-mean((salwinbugs$summary[startsWith(labels(salwinbugs$summary[, 1]), "kappa"), 8] > 1.10) | (salwinbugs$summary[startsWith(labels(salwinbugs$summary[, 1]), "kappa"), 9] < 100))
-mean((salwinbugs$summary[startsWith(labels(salwinbugs$summary[, 1]), "sd.theta"), 8] > 1.10) | (salwinbugs$summary[startsWith(labels(salwinbugs$summary[, 1]), "sd.theta"), 9] < 100))
-mean((salwinbugs$summary[startsWith(labels(salwinbugs$summary[, 1]), "lambda"), 8] > 1.10) | (salwinbugs$summary[startsWith(labels(salwinbugs$summary[, 1]), "lambda"), 9] < 100))
-mean((salwinbugs$summary[startsWith(labels(salwinbugs$summary[, 1]), "alpha"), 8] > 1.10) | (salwinbugs$summary[startsWith(labels(salwinbugs$summary[, 1]), "alpha"), 9] < 100))
+which((salwinbugs$summary[startsWith(labels(salwinbugs$summary[, 1]), "kappa"), 8] > 1.02) | (salwinbugs$summary[startsWith(labels(salwinbugs$summary[, 1]), "kappa"), 9] < 400))
+which((salwinbugs$summary[startsWith(labels(salwinbugs$summary[, 1]), "alpha"), 8] > 1.02) | (salwinbugs$summary[startsWith(labels(salwinbugs$summary[, 1]), "alpha"), 9] < 400))
+which((salwinbugs$summary[startsWith(labels(salwinbugs$summary[, 1]), "sd.theta"), 8] > 1.02) | (salwinbugs$summary[startsWith(labels(salwinbugs$summary[, 1]), "sd.theta"), 9] < 400))
+which((salwinbugs$summary[startsWith(labels(salwinbugs$summary[, 1]), "rho"), 8] > 1.02) | (salwinbugs$summary[startsWith(labels(salwinbugs$summary[, 1]), "rho"), 9] < 400))
+which((salwinbugs$summary[startsWith(labels(salwinbugs$summary[, 1]), "theta"), 8] > 1.02) | (salwinbugs$summary[startsWith(labels(salwinbugs$summary[, 1]), "theta"), 9] < 400))
 
 a <- labels(salwinbugs$summary[startsWith(labels(salwinbugs$summary[, 1]), "kappa"), 1])
 traceplot(salwinbugs, var.names = a)
-traceplot(salwinbugs, var.names = c("sd.theta", "lambda"))
+traceplot(salwinbugs, var.names = c("sd.theta", "rho"))
 traceplot(salwinbugs, var.names = c("theta[526]", "theta[14]", "theta[65]", "theta[177]"))
 
-plot(density(salwinbugs$sims.array[1:500, 1, "lambda"]), ylim = c(0, 2.5))
-lines(density(salwinbugs$sims.array[1:500, 2, "lambda"]), col = 2)
-lines(density(salwinbugs$sims.array[1:500, 3, "lambda"]), col = 3)
-lines(density(salwinbugs$sims.array[1:500, 4, "lambda"]), col = 4)
-lines(density(salwinbugs$sims.array[1:500, 5, "lambda"]), col = 5)
+plot(density(salwinbugs$sims.array[1:500, 1, "rho"]), ylim = c(0, 2.5))
+lines(density(salwinbugs$sims.array[1:500, 2, "rho"]), col = 2)
+lines(density(salwinbugs$sims.array[1:500, 3, "rho"]), col = 3)
+lines(density(salwinbugs$sims.array[1:500, 4, "rho"]), col = 4)
+lines(density(salwinbugs$sims.array[1:500, 5, "rho"]), col = 5)
 
 plot(density(salwinbugs$sims.array[1:500, 1, "kappa[1,3,4]"]), ylim = c(0, 0.8))
 lines(density(salwinbugs$sims.array[1:500, 2, "kappa[1,3,4]"]), col = 2)
@@ -444,7 +442,7 @@ lines(density(salwinbugs$sims.array[1:500, 3, "theta[526]"]), col = 3)
 lines(density(salwinbugs$sims.array[1:500, 4, "theta[526]"]), col = 4)
 lines(density(salwinbugs$sims.array[1:500, 5, "theta[526]"]), col = 5)
 
-plot(density(salwinbugs$sims.list$lambda))
+plot(density(salwinbugs$sims.list$rho))
 
 #### Supplementary Material: Dwelling stratum effect is not relevant ####
 
@@ -475,7 +473,7 @@ supplementary
 # ggsave("supplementary.eps", device = cairo_ps, fallback_resolution = 600,
 #        path = file.path("images"), width = 23, height = 16, units = "cm")
 
-#### Figure 2: kappa[1:NSex, 1:NAges, 1:NCats] ####
+#### Figure 2: kappa[1:NSex, 1:NAges, 1:(NCats-1)] ####
 
 round(salwinbugs$summary, 4)[startsWith(labels(salwinbugs$summary[, 1]), "kappa"), ]
 kappamean <- salwinbugs$mean$kappa
@@ -531,7 +529,7 @@ thetasim <- salwinbugs$sims.list$sd.theta * salwinbugs$sims.list$theta
 # Discretization by nine equal-probability intervals
 breaks <- c(min(apply(thetasim, 2, mean)) - 0.001, quantile(apply(thetasim, 2, mean), probs = seq(1/9, 8/9, length.out = 8)), max(apply(thetasim, 2, mean)))
 breaks
-breaks <- c(-0.60, round(breaks[2:9], 2), 0.48)
+# breaks <- c(-0.60, round(breaks[2:9], 2), 0.48)
 carto_muni@data$thetamean <- cut(apply(thetasim, 2, mean), breaks = breaks, include.lowest = FALSE, right = TRUE)
 
 # We order the factor levels to match the colors appropriately
@@ -556,7 +554,7 @@ carto_muni@data$thetamean <- cut(apply(thetasim, 2, mean), breaks = breaks, incl
 # We order the factor levels to match the colors appropriately
 carto_muni@data$thetamean <- factor(carto_muni@data$thetamean, levels = 
                                       rev(levels(carto_muni@data$thetamean)))
-levels(carto_muni@data$thetamean) <- c("(0.17,0.48)", levels(carto_muni@data$thetamean)[2:9])
+# levels(carto_muni@data$thetamean) <- c("(0.17,0.48)", levels(carto_muni@data$thetamean)[2:9])
 
 spplot(carto_muni,
        c("thetamean"),
@@ -579,7 +577,6 @@ for (sim in 1:n.sims) {
 }
 
 breaks <- c(-0.01, 0.05, 0.10, 0.20, 0.80, 0.90, 0.95, 1)
-breaks
 carto_muni@data$probmean <- cut(apply(stepsim, 2, mean), breaks = breaks, include.lowest = FALSE, right = TRUE)
 levels(carto_muni@data$probmean) <- c("[0,0.05]",
                                       levels(carto_muni@data$probmean)[2:6],
@@ -598,15 +595,15 @@ spplot(carto_muni,
 #### Interactive maps ####
 
 # Does the municipality have any respondents?
-carto_muni@data$index <- as.factor(as.numeric((1:542 %in% sort(unique(muni)))))
+carto_muni@data$index <- as.factor(as.numeric((1:NMuni %in% sort(unique(muni)))))
 levels(carto_muni@data$index) <- c("No", "Yes")
 
 # Number of respondents from each municipality
-munif <- factor(muni, levels = 1:542)
+munif <- factor(muni, levels = 1:NMuni)
 carto_muni@data$Sampled <- table(munif)
 
 # Municipalities without respondents
-norepre <- which(!(1:542 %in% sort(unique(muni))))
+norepre <- which(!(1:NMuni %in% sort(unique(muni))))
 
 labels1 <- sprintf("<strong> %s </strong> <br/>
    Municipality: %s <br/>
@@ -665,7 +662,7 @@ leaflet(carto_muni) %>%
     )
   )
 
-#### Figure 4: Maps of the RV - area population level percentages with post-stratification ####
+#### Figure 4: Maps of the RV - area population level percentages with post-stratification (MRP) ####
 
 # function1: 
 # - (1) computes the n.sims simulated probabilities for each sex, age group and municipality
@@ -879,7 +876,7 @@ for (Muni in 1:NMuni) {
 # - (3) The estimated number of individuals in each category and municipality is the 
 # result of adding all the previous values.
 # - (4) We compute posterior mean, 95% prediction intervals and observed value of the 
-# percentage of respondents in each category and municipality
+# percentage of respondents in each category and municipality.
 
 function2 <- function(prlevels, Muni) {
   
