@@ -544,7 +544,7 @@ system.time(salnimble <- parLapply(cl = this_cluster, X = 1:n.chains,
 # It's good practice to close the cluster when you're done with it.
 stopCluster(this_cluster)
 
-# 11.41 min on a server with: niter = 8500, nburnin = 1000, thin = 15
+# 11.41 min on a server with: n.chains = 5, niter = 8500, nburnin = 1000, thin = 15
 # saveRDS(salnimble, file = file.path("results", "a-case-study-nimble.rds"))
 
 #### NIMBLE (parallelized): Option 2 Stick-breaking prior ####

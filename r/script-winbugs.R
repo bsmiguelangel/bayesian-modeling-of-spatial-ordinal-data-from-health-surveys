@@ -357,7 +357,7 @@ model <- function() {
   
 }
 
-### Initial values funtion ### 
+### Initial values function ### 
 
 inits <- function() {
   kk = rnorm(NMuni)
@@ -390,7 +390,7 @@ parameters <- c("kappa", "alpha", "theta", "sd.theta", "rho")
 ### WinBUGS call (working.directory path should be changed) ###
 
 salwinbugs <- pbugs(model = model, data = data, inits = inits, parameters.to.save = parameters, 
-                    n.chains = 5, n.iter = 3250, n.burnin = 750, n.thin = 5,
+                    n.chains = 5, n.iter = 8500, n.burnin = 1000, n.thin = 15,
                     #working.directory = "~/.wine/drive_c/temp/Rtmp",
                     working.directory = "/home/beltran_mig/.wine/drive_c/users/beltran_mig/Temp/Area1/",
                     cluster = 5
@@ -399,7 +399,6 @@ salwinbugs <- pbugs(model = model, data = data, inits = inits, parameters.to.sav
                     , DIC = FALSE
 )
 
-# 10.65 min on a server with: niter = 3250, nburnin = 750, thin = 5
 # saveRDS(salwinbugs, file = file.path("results", "a-case-study-winbugs.rds"))
 
 #### Model results ####
@@ -422,7 +421,8 @@ which((salwinbugs$summary[startsWith(labels(salwinbugs$summary[, 1]), "theta"), 
 a <- labels(salwinbugs$summary[startsWith(labels(salwinbugs$summary[, 1]), "kappa"), 1])
 traceplot(salwinbugs, var.names = a)
 traceplot(salwinbugs, var.names = c("sd.theta", "rho"))
-traceplot(salwinbugs, var.names = c("theta[526]", "theta[14]", "theta[65]", "theta[177]"))
+traceplot(salwinbugs, var.names = c("theta[526]", "theta[14]", "theta[65]", "theta[177]",
+                                    "theta[216]", "theta[130]"))
 
 plot(density(salwinbugs$sims.array[1:500, 1, "rho"]), ylim = c(0, 2.5))
 lines(density(salwinbugs$sims.array[1:500, 2, "rho"]), col = 2)
@@ -591,6 +591,27 @@ spplot(carto_muni,
        par.settings = list(axis.line = list(col = 'transparent')),
        col = "black",
        lwd = 0.10)
+
+# grid.arrange(spplot(carto_muni,
+#                     c("thetamean"), main = "(a)                                                                      ",
+#                     col.regions = colorRampPalette(brewer.pal(7,'BrBG'))(9)[9:1],
+#                     cuts = 8,
+#                     colorkey = list(key = list(labels = c("Better", " ", "  ", "   ", "    ",
+#                                                           "     ", "      ", "       ", "Worse")),
+#                                     width = 1.5, cex = 1.5, height = 0.75),
+#                     par.settings = list(axis.line = list(col = 'transparent')),
+#                     col = "black",
+#                     lwd = 0.10),
+#              spplot(carto_muni,
+#                     c("probmean"), main = "(b)                                                                           ",
+#                     col.regions = colorRampPalette(brewer.pal(7,'RdYlGn'))(9)[c(9:7, 5, 3:1)],
+#                     cuts = 8,
+#                     colorkey = list(key = list(labels = levels(carto_muni@data$probmean)),
+#                                     width = 1.5, cex = 1.5, height = 0.75),
+#                     par.settings = list(axis.line = list(col = 'transparent')),
+#                     col = "black",
+#                     lwd = 0.10),
+#              ncol = 2)
 
 #### Interactive maps ####
 
