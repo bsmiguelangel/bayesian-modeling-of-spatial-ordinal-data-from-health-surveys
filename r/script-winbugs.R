@@ -747,7 +747,6 @@ breaks <- c(14.59, round(breaks[2:9], 2), 31.31)
 carto_muni@data$category1 <- cut(category, breaks = breaks, include.lowest = FALSE, right = TRUE, dig.lab = 4)
 levels(carto_muni@data$category1) <- c(levels(carto_muni@data$category1)[1:8],
                                        "(25.02,31.31)")
-
 category <- percentagesmean[, 2]
 breaks <- c(min(category) - 0.001, quantile(category, probs = seq(1/9, 8/9, length.out = 8)), max(category))
 breaks
